@@ -1,7 +1,7 @@
 'use client';
 
 import { useProjects } from '@/context/ProjectContext';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { TaskItem } from '@/components/app/task-item';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -9,6 +9,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+
+function calculateRemainingValue(totalValue: number, tasks: any[]): number {
+    const usedValue = tasks.reduce((acc, task) => acc + task.value, 0);
+    return totalValue - usedValue;
+}
+
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -17,19 +24,24 @@ export default function ProjectDetailPage() {
 
   const [isAddingTask, setIsAddingTask] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState('');
+  const [taskValue, setTaskValue] = React.useState(0);
 
   if (!project) {
-    // Let's not call notFound() immediately, data might still be loading
-    // We can show a loading state instead.
-    // For now, returning null is fine as the context handles loading state.
     return null;
   }
   
+  const remainingValue = calculateRemainingValue(project.value, project.tasks);
+
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if(taskTitle.trim()) {
-        addTask(project.id, null, taskTitle.trim());
+    if(taskTitle.trim() && taskValue > 0) {
+        if (taskValue > remainingValue) {
+            alert(`Task value cannot exceed remaining project value of ${remainingValue}`);
+            return;
+        }
+        addTask(project.id, null, taskTitle.trim(), taskValue);
         setTaskTitle('');
+        setTaskValue(0);
         setIsAddingTask(false);
     }
   }
@@ -38,8 +50,15 @@ export default function ProjectDetailPage() {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight">{project.title}</CardTitle>
-          <CardDescription className="text-base">{project.description}</CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-3xl font-bold tracking-tight">{project.title}</CardTitle>
+              <CardDescription className="text-base mt-1">{project.description}</CardDescription>
+            </div>
+            <Badge variant="outline" className="text-lg">
+                Total Value: {project.value}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-8 text-sm">
@@ -59,12 +78,12 @@ export default function ProjectDetailPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Tasks</CardTitle>
-            <CardDescription>
-              Manage all tasks and sub-tasks for this project.
+             <CardDescription>
+              Remaining value to assign: <span className="font-bold text-foreground">{remainingValue}</span>
             </CardDescription>
           </div>
           {!isAddingTask && (
-            <Button variant="outline" onClick={() => setIsAddingTask(true)}>
+            <Button variant="outline" onClick={() => setIsAddingTask(true)} disabled={remainingValue === 0}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Task
             </Button>
@@ -78,6 +97,14 @@ export default function ProjectDetailPage() {
                         value={taskTitle}
                         onChange={(e) => setTaskTitle(e.target.value)}
                         autoFocus
+                    />
+                    <Input
+                        type="number"
+                        placeholder="Value"
+                        value={taskValue || ''}
+                        onChange={(e) => setTaskValue(parseInt(e.target.value, 10) || 0)}
+                        max={remainingValue}
+                        className="w-28"
                     />
                     <Button type="submit" className="bg-primary hover:bg-primary/90">Add Task</Button>
                     <Button type="button" variant="ghost" onClick={() => setIsAddingTask(false)}>Cancel</Button>

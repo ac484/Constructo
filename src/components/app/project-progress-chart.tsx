@@ -15,27 +15,59 @@ const COLORS = {
   Pending: 'hsl(var(--secondary))',
 };
 
-const calculateProgress = (tasks: Task[]) => {
+type ProgressData = {
+    completed: number;
+    inProgress: number;
+    pending: number;
+    totalValue: number;
+}
+
+const calculateValueProgress = (project: Project): ProgressData => {
   let completed = 0;
   let inProgress = 0;
   let pending = 0;
-  let total = 0;
 
   const countTasks = (taskList: Task[]) => {
     for (const task of taskList) {
-      total++;
-      if (task.status === 'Completed') completed++;
-      else if (task.status === 'In Progress') inProgress++;
-      else pending++;
-
+      if (task.status === 'Completed') completed += task.value;
+      else if (task.status === 'In Progress') inProgress += task.value;
+      else pending += task.value;
+      
+      // Since parent task value is the sum of its children, we don't need to recurse
+      // if we are already iterating through all tasks flatly. But the structure is nested.
       if (task.subTasks.length > 0) {
         countTasks(task.subTasks);
       }
     }
   };
+  
+  // To avoid double counting, let's just use the main tasks if they have subtasks
+  // or the subtasks if they exist. The model is a bit tricky.
+  // The provided model: parent value should be sum of children. Let's assume that for now.
+  // We should just iterate through all tasks and sum up their values based on status.
+  const allTasks: Task[] = [];
+  const flattenTasks = (tasks: Task[]) => {
+    tasks.forEach(task => {
+        allTasks.push(task);
+        if (task.subTasks) {
+            flattenTasks(task.subTasks);
+        }
+    })
+  }
+  flattenTasks(project.tasks);
+  
+  const progress = { completed: 0, inProgress: 0, pending: 0 };
+  allTasks.forEach(task => {
+      // We only count leaf nodes for progress calculation to avoid double counting value.
+      if (task.subTasks.length === 0) {
+          if (task.status === 'Completed') progress.completed += task.value;
+          else if (task.status === 'In Progress') progress.inProgress += task.value;
+          else progress.pending += task.value;
+      }
+  });
 
-  countTasks(tasks);
-  return { completed, inProgress, pending, total };
+
+  return { ...progress, totalValue: project.value };
 };
 
 export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
@@ -45,24 +77,27 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
     setIsClient(true);
   }, []);
 
-  const { completed, inProgress, pending, total } = React.useMemo(
-    () => calculateProgress(project.tasks),
-    [project.tasks]
+  const { completed, inProgress, pending, totalValue } = React.useMemo(
+    () => calculateValueProgress(project),
+    [project]
   );
   
-  const completionPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const completionPercentage = totalValue > 0 ? Math.round((completed / totalValue) * 100) : 0;
 
   const data = [
     { name: 'Completed', value: completed },
     { name: 'In Progress', value: inProgress },
     { name: 'Pending', value: pending },
   ].filter(item => item.value > 0);
+  
+  const totalTasks = project.tasks.reduce((acc, task) => acc + 1 + task.subTasks.length, 0);
+
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{project.title}</CardTitle>
-        <CardDescription>{total} tasks</CardDescription>
+        <CardDescription>{totalTasks} tasks, Total Value: {project.value}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center">
         <div className="relative h-48 w-48">
@@ -74,6 +109,7 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
                   borderColor: 'hsl(var(--border))',
                   borderRadius: 'var(--radius)',
                 }}
+                formatter={(value: number, name: string) => [`${value} value`, name]}
               />
               <Pie
                 data={data}

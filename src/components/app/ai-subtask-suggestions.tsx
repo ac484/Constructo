@@ -79,7 +79,7 @@ export function AISubtaskSuggestions({
                     </Button>
                     </li>
                 ))}
-                 {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All suggestions have been added.</p>}
+                 {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All suggestions have been added or none were generated.</p>}
                 </ul>
             )}
             </AlertDescription>

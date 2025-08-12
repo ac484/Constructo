@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 const projectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   description: z.string().min(10, 'Description must be at least 10 characters long.'),
+  value: z.coerce.number().min(1, 'Value must be at least 1.'),
   startDate: z.date({ required_error: 'A start date is required.' }),
   endDate: z.date({ required_error: 'An end date is required.' }),
 }).refine((data) => data.endDate > data.startDate, {
@@ -46,6 +47,7 @@ export function CreateProjectDialog() {
     defaultValues: {
       title: '',
       description: '',
+      value: 100,
     },
   });
 
@@ -100,6 +102,19 @@ export function CreateProjectDialog() {
                       placeholder="A brief description of the project scope and goals."
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="value"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Value</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 100" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

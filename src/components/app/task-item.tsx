@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import { AISubtaskSuggestions } from './ai-subtask-suggestions';
+import { Badge } from '../ui/badge';
 
 interface TaskItemProps {
   task: Task;
@@ -52,14 +53,21 @@ const statusColors: Record<TaskStatus, string> = {
     Completed: 'border-green-500/30',
 };
 
+function calculateRemainingValue(totalValue: number, tasks: any[]): number {
+    const usedValue = tasks.reduce((acc, task) => acc + task.value, 0);
+    return totalValue - usedValue;
+}
+
 export function TaskItem({ task, projectId }: TaskItemProps) {
   const { updateTaskStatus, addTask, findProject } = useProjects();
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState('');
+  const [subtaskValue, setSubtaskValue] = useState(0);
   const [isOpen, setIsOpen] = useState(true);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
 
   const project = findProject(projectId);
+  const remainingValue = calculateRemainingValue(task.value, task.subTasks);
 
   const handleStatusChange = (status: TaskStatus) => {
     updateTaskStatus(projectId, task.id, status);
@@ -68,12 +76,28 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
   const handleAddSubtask = (e: React.FormEvent) => {
     e.preventDefault();
     if (subtaskTitle.trim()) {
-      addTask(projectId, task.id, subtaskTitle.trim());
+        if (subtaskValue > remainingValue) {
+            alert(`Sub-task value cannot exceed remaining task value of ${remainingValue}`);
+            return;
+        }
+      addTask(projectId, task.id, subtaskTitle.trim(), subtaskValue);
       setSubtaskTitle('');
+      setSubtaskValue(0);
       setIsAddingSubtask(false);
       setIsOpen(true);
     }
   };
+
+  const handleAddSuggestedSubtask = (title: string) => {
+    // For AI suggestions, we can auto-assign remaining value, or a portion of it.
+    // For simplicity, let's assign a value of 1 if possible, or the remaining value.
+    const suggestedValue = Math.min(1, remainingValue);
+    if (suggestedValue > 0) {
+        addTask(projectId, task.id, title, suggestedValue);
+    } else {
+        alert("No remaining value to assign to new sub-tasks.");
+    }
+  }
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -102,6 +126,7 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
             </Button>
           </CollapsibleTrigger>
           <span className="flex-grow font-medium">{task.title}</span>
+          <Badge variant="secondary">{task.value} pts</Badge>
           <Tooltip>
             <TooltipTrigger>
               <span className="text-xs text-muted-foreground mr-2">
@@ -149,12 +174,13 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setIsAddingSubtask(true)}
+                disabled={remainingValue === 0}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Add Sub-task</p>
+              {remainingValue > 0 ? <p>Add Sub-task</p> : <p>No remaining value to assign</p>}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -163,7 +189,7 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
             <AISubtaskSuggestions
                 projectTitle={project.title}
                 taskTitle={task.title}
-                onAddSubtask={(title) => addTask(projectId, task.id, title)}
+                onAddSubtask={handleAddSuggestedSubtask}
                 onClose={() => setShowAISuggestions(false)}
             />
         )}
@@ -181,6 +207,14 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
                 placeholder="New sub-task title"
                 className="h-8"
                 autoFocus
+              />
+              <Input
+                  type="number"
+                  placeholder="Value"
+                  value={subtaskValue || ''}
+                  onChange={(e) => setSubtaskValue(parseInt(e.target.value, 10) || 0)}
+                  max={remainingValue}
+                  className="h-8 w-24"
               />
               <Button type="submit" size="sm" className="bg-primary hover:bg-primary/90">Add</Button>
               <Button

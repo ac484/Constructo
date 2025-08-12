@@ -6,6 +6,7 @@ export interface Task {
   status: TaskStatus;
   lastUpdated: string;
   subTasks: Task[];
+  value: number;
 }
 
 export interface Project {
@@ -15,4 +16,5 @@ export interface Project {
   startDate: Date;
   endDate: Date;
   tasks: Task[];
+  value: number;
 }

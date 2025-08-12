@@ -8,16 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CreateProjectDialog } from '@/components/app/create-project-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Task } from '@/lib/types';
 
-function calculateProgress(tasks: any[]): { completed: number, total: number } {
-  let completed = 0;
-  let total = 0;
+function calculateProgress(tasks: Task[], totalProjectValue: number): { completedValue: number, totalValue: number } {
+  let completedValue = 0;
   
   function recurse(taskArray: any[]) {
     taskArray.forEach(task => {
-      total++;
       if (task.status === 'Completed') {
-        completed++;
+        completedValue += task.value;
       }
       if (task.subTasks && task.subTasks.length > 0) {
         recurse(task.subTasks);
@@ -26,7 +25,7 @@ function calculateProgress(tasks: any[]): { completed: number, total: number } {
   }
   
   recurse(tasks);
-  return { completed, total };
+  return { completedValue, totalValue: totalProjectValue };
 }
 
 export default function ProjectsPage() {
@@ -74,8 +73,8 @@ export default function ProjectsPage() {
       ) : (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
-          const { completed, total } = calculateProgress(project.tasks);
-          const progressPercentage = total > 0 ? (completed / total) * 100 : 0;
+          const { completedValue } = calculateProgress(project.tasks, project.value);
+          const progressPercentage = project.value > 0 ? (completedValue / project.value) * 100 : 0;
           
           return (
             <Card key={project.id} className="flex flex-col">
@@ -90,7 +89,7 @@ export default function ProjectsPage() {
                          <span className="text-sm font-semibold">{Math.round(progressPercentage)}%</span>
                     </div>
                     <Progress value={progressPercentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground text-right">{completed} of {total} tasks complete</p>
+                    <p className="text-xs text-muted-foreground text-right">{completedValue} of {project.value} value complete</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
                   <p><span className="font-medium text-foreground">Start:</span> {project.startDate ? format(project.startDate, 'MMM dd, yyyy') : 'N/A'}</p>
