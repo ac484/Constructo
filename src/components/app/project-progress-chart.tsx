@@ -39,6 +39,12 @@ const calculateProgress = (tasks: Task[]) => {
 };
 
 export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const { completed, inProgress, pending, total } = React.useMemo(
     () => calculateProgress(project.tasks),
     [project.tasks]
@@ -60,29 +66,31 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center">
         <div className="relative h-48 w-48">
-          <PieChart width={192} height={192}>
-            <Tooltip
-              contentStyle={{
-                background: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: 'var(--radius)',
-              }}
-            />
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={5}
-              dataKey="value"
-              cornerRadius={8}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
-              ))}
-            </Pie>
-          </PieChart>
+          {isClient && (
+            <PieChart width={192} height={192}>
+              <Tooltip
+                contentStyle={{
+                  background: 'hsl(var(--background))',
+                  borderColor: 'hsl(var(--border))',
+                  borderRadius: 'var(--radius)',
+                }}
+              />
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+                cornerRadius={8}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
+                ))}
+              </Pie>
+            </PieChart>
+          )}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
              <span className="text-3xl font-bold text-foreground">{completionPercentage}%</span>
              <span className="text-sm text-muted-foreground">Complete</span>
