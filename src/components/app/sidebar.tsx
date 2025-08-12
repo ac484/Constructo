@@ -38,18 +38,18 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/construct')} tooltip="Construct">
-              <Link href="/construct">
-                <FolderKanban />
-                <span>Construct</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname.startsWith('/projects')} tooltip="Projects">
               <Link href="/projects">
                 <FolderKanban />
                 <span>Projects</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/construct')} tooltip="Contracts">
+              <Link href="/construct">
+                <Building2 />
+                <span>Contracts</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
