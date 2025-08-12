@@ -10,9 +10,10 @@ import { PlusCircle } from 'lucide-react';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Task } from '@/lib/types';
 
-function calculateRemainingValue(totalValue: number, tasks: any[]): number {
-    const usedValue = tasks.reduce((acc, task) => acc + task.value, 0);
+function calculateRemainingValue(totalValue: number, tasks: Task[]): number {
+    const usedValue = tasks.reduce((acc, task) => acc + (task.value || 0), 0);
     return totalValue - usedValue;
 }
 
@@ -24,24 +25,27 @@ export default function ProjectDetailPage() {
 
   const [isAddingTask, setIsAddingTask] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState('');
-  const [taskValue, setTaskValue] = React.useState(0);
+  const [taskQuantity, setTaskQuantity] = React.useState(1);
+  const [taskUnitPrice, setTaskUnitPrice] = React.useState(0);
 
   if (!project) {
     return null;
   }
   
   const remainingValue = calculateRemainingValue(project.value, project.tasks);
+  const taskValue = taskQuantity * taskUnitPrice;
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if(taskTitle.trim() && taskValue > 0) {
         if (taskValue > remainingValue) {
-            alert(`Task value cannot exceed remaining project value of ${remainingValue}`);
+            alert(`Task value (${taskValue}) cannot exceed remaining project value of ${remainingValue}`);
             return;
         }
-        addTask(project.id, null, taskTitle.trim(), taskValue);
+        addTask(project.id, null, taskTitle.trim(), taskQuantity, taskUnitPrice);
         setTaskTitle('');
-        setTaskValue(0);
+        setTaskQuantity(1);
+        setTaskUnitPrice(0);
         setIsAddingTask(false);
     }
   }
@@ -56,7 +60,7 @@ export default function ProjectDetailPage() {
               <CardDescription className="text-base mt-1">{project.description}</CardDescription>
             </div>
             <Badge variant="outline" className="text-lg">
-                Total Value: {project.value}
+                Total Value: ${project.value.toLocaleString()}
             </Badge>
           </div>
         </CardHeader>
@@ -79,7 +83,7 @@ export default function ProjectDetailPage() {
           <div>
             <CardTitle>Tasks</CardTitle>
              <CardDescription>
-              Remaining value to assign: <span className="font-bold text-foreground">{remainingValue}</span>
+              Remaining value to assign: <span className="font-bold text-foreground">${remainingValue.toLocaleString()}</span>
             </CardDescription>
           </div>
           {!isAddingTask && (
@@ -96,16 +100,26 @@ export default function ProjectDetailPage() {
                         placeholder="Enter new task title..." 
                         value={taskTitle}
                         onChange={(e) => setTaskTitle(e.target.value)}
+                        className="flex-grow"
                         autoFocus
                     />
                     <Input
                         type="number"
-                        placeholder="Value"
-                        value={taskValue || ''}
-                        onChange={(e) => setTaskValue(parseInt(e.target.value, 10) || 0)}
-                        max={remainingValue}
-                        className="w-28"
+                        placeholder="Qty"
+                        value={taskQuantity || ''}
+                        onChange={(e) => setTaskQuantity(parseInt(e.target.value, 10) || 1)}
+                        className="w-20"
                     />
+                    <Input
+                        type="number"
+                        placeholder="Unit Price"
+                        value={taskUnitPrice || ''}
+                        onChange={(e) => setTaskUnitPrice(parseInt(e.target.value, 10) || 0)}
+                        className="w-24"
+                    />
+                     <Badge variant="secondary" className="w-24 justify-center">
+                        Value: ${taskValue.toLocaleString()}
+                    </Badge>
                     <Button type="submit" className="bg-primary hover:bg-primary/90">Add Task</Button>
                     <Button type="button" variant="ghost" onClick={() => setIsAddingTask(false)}>Cancel</Button>
                 </form>

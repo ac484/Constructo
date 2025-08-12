@@ -11,7 +11,7 @@ interface ProjectContextType {
   loading: boolean;
   findProject: (projectId: string) => Project | undefined;
   updateTaskStatus: (projectId: string, taskId: string, status: TaskStatus) => Promise<void>;
-  addTask: (projectId: string, parentTaskId: string | null, taskTitle: string, value: number) => Promise<void>;
+  addTask: (projectId: string, parentTaskId: string | null, taskTitle: string, quantity: number, unitPrice: number) => Promise<void>;
   addProject: (project: Omit<Project, 'id' | 'tasks'>) => Promise<void>;
 }
 
@@ -92,7 +92,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
   
-  const addTask = async (projectId: string, parentTaskId: string | null, taskTitle: string, value: number) => {
+  const addTask = async (projectId: string, parentTaskId: string | null, taskTitle: string, quantity: number, unitPrice: number) => {
     const projectRef = doc(db, "projects", projectId);
     const projectData = findProject(projectId);
     if (!projectData) return;
@@ -103,7 +103,9 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         status: 'Pending',
         lastUpdated: new Date().toISOString(),
         subTasks: [],
-        value: value,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        value: quantity * unitPrice,
       };
 
     const addRecursive = (tasks: Task[]): Task[] => {

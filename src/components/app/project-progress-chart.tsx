@@ -23,43 +23,24 @@ type ProgressData = {
 }
 
 const calculateValueProgress = (project: Project): ProgressData => {
-  let completed = 0;
-  let inProgress = 0;
-  let pending = 0;
-
-  const countTasks = (taskList: Task[]) => {
-    for (const task of taskList) {
-      if (task.status === 'Completed') completed += task.value;
-      else if (task.status === 'In Progress') inProgress += task.value;
-      else pending += task.value;
-      
-      // Since parent task value is the sum of its children, we don't need to recurse
-      // if we are already iterating through all tasks flatly. But the structure is nested.
-      if (task.subTasks.length > 0) {
-        countTasks(task.subTasks);
-      }
-    }
-  };
+  const progress = { completed: 0, inProgress: 0, pending: 0 };
   
-  // To avoid double counting, let's just use the main tasks if they have subtasks
-  // or the subtasks if they exist. The model is a bit tricky.
-  // The provided model: parent value should be sum of children. Let's assume that for now.
-  // We should just iterate through all tasks and sum up their values based on status.
-  const allTasks: Task[] = [];
-  const flattenTasks = (tasks: Task[]) => {
+  const flattenTasks = (tasks: Task[]): Task[] => {
+    let allTasks: Task[] = [];
     tasks.forEach(task => {
         allTasks.push(task);
-        if (task.subTasks) {
-            flattenTasks(task.subTasks);
+        if (task.subTasks && task.subTasks.length > 0) {
+            allTasks = allTasks.concat(flattenTasks(task.subTasks));
         }
-    })
+    });
+    return allTasks;
   }
-  flattenTasks(project.tasks);
-  
-  const progress = { completed: 0, inProgress: 0, pending: 0 };
+
+  const allTasks = flattenTasks(project.tasks);
+
   allTasks.forEach(task => {
       // We only count leaf nodes for progress calculation to avoid double counting value.
-      if (task.subTasks.length === 0) {
+      if (!task.subTasks || task.subTasks.length === 0) {
           if (task.status === 'Completed') progress.completed += task.value;
           else if (task.status === 'In Progress') progress.inProgress += task.value;
           else progress.pending += task.value;
@@ -97,7 +78,7 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
     <Card>
       <CardHeader>
         <CardTitle>{project.title}</CardTitle>
-        <CardDescription>{totalTasks} tasks, Total Value: {project.value}</CardDescription>
+        <CardDescription>{totalTasks} tasks, Total Value: ${project.value.toLocaleString()}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center">
         <div className="relative h-48 w-48">
@@ -109,7 +90,7 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
                   borderColor: 'hsl(var(--border))',
                   borderRadius: 'var(--radius)',
                 }}
-                formatter={(value: number, name: string) => [`${value} value`, name]}
+                formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]}
               />
               <Pie
                 data={data}
@@ -139,7 +120,7 @@ export function ProjectProgressChart({ project }: ProjectProgressChartProps) {
                 className="mr-2 h-3 w-3 rounded-full"
                 style={{ backgroundColor: COLORS[entry.name as keyof typeof COLORS] }}
               ></span>
-              <span>{entry.name} ({entry.value})</span>
+              <span>{entry.name} (${entry.value.toLocaleString()})</span>
             </div>
           ))}
         </div>

@@ -6,7 +6,9 @@ export interface Task {
   status: TaskStatus;
   lastUpdated: string;
   subTasks: Task[];
-  value: number;
+  value: number; // This will now be calculated as quantity * unitPrice
+  quantity: number;
+  unitPrice: number;
 }
 
 export interface Project {

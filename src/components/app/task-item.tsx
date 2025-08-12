@@ -53,8 +53,8 @@ const statusColors: Record<TaskStatus, string> = {
     Completed: 'border-green-500/30',
 };
 
-function calculateRemainingValue(totalValue: number, tasks: any[]): number {
-    const usedValue = tasks.reduce((acc, task) => acc + task.value, 0);
+function calculateRemainingValue(totalValue: number, tasks: Task[]): number {
+    const usedValue = tasks.reduce((acc, task) => acc + (task.value || 0), 0);
     return totalValue - usedValue;
 }
 
@@ -62,12 +62,15 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
   const { updateTaskStatus, addTask, findProject } = useProjects();
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState('');
-  const [subtaskValue, setSubtaskValue] = useState(0);
+  const [subtaskQuantity, setSubtaskQuantity] = useState(1);
+  const [subtaskUnitPrice, setSubtaskUnitPrice] = useState(0);
+
   const [isOpen, setIsOpen] = useState(true);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
 
   const project = findProject(projectId);
   const remainingValue = calculateRemainingValue(task.value, task.subTasks);
+  const subtaskValue = subtaskQuantity * subtaskUnitPrice;
 
   const handleStatusChange = (status: TaskStatus) => {
     updateTaskStatus(projectId, task.id, status);
@@ -75,25 +78,24 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
 
   const handleAddSubtask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (subtaskTitle.trim()) {
+    if (subtaskTitle.trim() && subtaskValue > 0) {
         if (subtaskValue > remainingValue) {
-            alert(`Sub-task value cannot exceed remaining task value of ${remainingValue}`);
+            alert(`Sub-task value (${subtaskValue}) cannot exceed remaining task value of ${remainingValue}`);
             return;
         }
-      addTask(projectId, task.id, subtaskTitle.trim(), subtaskValue);
+      addTask(projectId, task.id, subtaskTitle.trim(), subtaskQuantity, subtaskUnitPrice);
       setSubtaskTitle('');
-      setSubtaskValue(0);
+      setSubtaskQuantity(1);
+      setSubtaskUnitPrice(0);
       setIsAddingSubtask(false);
       setIsOpen(true);
     }
   };
 
   const handleAddSuggestedSubtask = (title: string) => {
-    // For AI suggestions, we can auto-assign remaining value, or a portion of it.
-    // For simplicity, let's assign a value of 1 if possible, or the remaining value.
-    const suggestedValue = Math.min(1, remainingValue);
-    if (suggestedValue > 0) {
-        addTask(projectId, task.id, title, suggestedValue);
+    const suggestedUnitPrice = Math.min(10, remainingValue); // Suggest a unit price of 10 or remaining
+    if (suggestedUnitPrice > 0) {
+        addTask(projectId, task.id, title, 1, suggestedUnitPrice);
     } else {
         alert("No remaining value to assign to new sub-tasks.");
     }
@@ -126,7 +128,7 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
             </Button>
           </CollapsibleTrigger>
           <span className="flex-grow font-medium">{task.title}</span>
-          <Badge variant="secondary">{task.value} pts</Badge>
+          <Badge variant="secondary">${task.value.toLocaleString()} ({task.quantity} x ${task.unitPrice.toLocaleString()})</Badge>
           <Tooltip>
             <TooltipTrigger>
               <span className="text-xs text-muted-foreground mr-2">
@@ -180,7 +182,7 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {remainingValue > 0 ? <p>Add Sub-task</p> : <p>No remaining value to assign</p>}
+              {remainingValue > 0 ? <p>Add Sub-task (Rem: ${remainingValue.toLocaleString()})</p> : <p>No remaining value to assign</p>}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -200,28 +202,38 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
           ))}
 
           {isAddingSubtask && (
-            <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pl-8">
+            <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pl-8 pr-2 py-2 rounded-lg border bg-secondary">
               <Input
                 value={subtaskTitle}
                 onChange={(e) => setSubtaskTitle(e.target.value)}
                 placeholder="New sub-task title"
-                className="h-8"
+                className="h-8 flex-grow"
                 autoFocus
               />
-              <Input
-                  type="number"
-                  placeholder="Value"
-                  value={subtaskValue || ''}
-                  onChange={(e) => setSubtaskValue(parseInt(e.target.value, 10) || 0)}
-                  max={remainingValue}
-                  className="h-8 w-24"
-              />
-              <Button type="submit" size="sm" className="bg-primary hover:bg-primary/90">Add</Button>
+               <Input
+                    type="number"
+                    placeholder="Qty"
+                    value={subtaskQuantity || ''}
+                    onChange={(e) => setSubtaskQuantity(parseInt(e.target.value, 10) || 1)}
+                    className="h-8 w-20"
+                />
+                <Input
+                    type="number"
+                    placeholder="Unit Price"
+                    value={subtaskUnitPrice || ''}
+                    onChange={(e) => setSubtaskUnitPrice(parseInt(e.target.value, 10) || 0)}
+                    className="h-8 w-24"
+                />
+                <Badge variant="outline" className="h-8 w-28 justify-center bg-background">
+                    Value: ${subtaskValue.toLocaleString()}
+                </Badge>
+              <Button type="submit" size="sm" className="bg-primary hover:bg-primary/90 h-8">Add</Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsAddingSubtask(false)}
+                className="h-8"
               >
                 Cancel
               </Button>

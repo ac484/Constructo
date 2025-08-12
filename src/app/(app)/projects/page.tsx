@@ -10,23 +10,26 @@ import { CreateProjectDialog } from '@/components/app/create-project-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Task } from '@/lib/types';
 
-function calculateProgress(tasks: Task[], totalProjectValue: number): { completedValue: number, totalValue: number } {
+function calculateProgress(tasks: Task[]): { completedValue: number } {
   let completedValue = 0;
-  
-  function recurse(taskArray: any[]) {
+
+  function recurse(taskArray: Task[]) {
     taskArray.forEach(task => {
-      if (task.status === 'Completed') {
-        completedValue += task.value;
-      }
+      // Only count leaf nodes for progress
       if (task.subTasks && task.subTasks.length > 0) {
         recurse(task.subTasks);
+      } else {
+        if (task.status === 'Completed') {
+          completedValue += task.value;
+        }
       }
     });
   }
-  
+
   recurse(tasks);
-  return { completedValue, totalValue: totalProjectValue };
+  return { completedValue };
 }
+
 
 export default function ProjectsPage() {
   const { projects, loading } = useProjects();
@@ -73,7 +76,7 @@ export default function ProjectsPage() {
       ) : (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
-          const { completedValue } = calculateProgress(project.tasks, project.value);
+          const { completedValue } = calculateProgress(project.tasks);
           const progressPercentage = project.value > 0 ? (completedValue / project.value) * 100 : 0;
           
           return (
@@ -89,7 +92,7 @@ export default function ProjectsPage() {
                          <span className="text-sm font-semibold">{Math.round(progressPercentage)}%</span>
                     </div>
                     <Progress value={progressPercentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground text-right">{completedValue} of {project.value} value complete</p>
+                    <p className="text-xs text-muted-foreground text-right">${completedValue.toLocaleString()} of ${project.value.toLocaleString()} value complete</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
                   <p><span className="font-medium text-foreground">Start:</span> {project.startDate ? format(project.startDate, 'MMM dd, yyyy') : 'N/A'}</p>
