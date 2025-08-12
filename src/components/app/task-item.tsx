@@ -101,6 +101,10 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
     }
   }
 
+  const taskQuantity = task.quantity || 0;
+  const taskUnitPrice = task.unitPrice || 0;
+  const taskValue = task.value || 0;
+
   return (
     <TooltipProvider delayDuration={200}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
@@ -128,7 +132,7 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
             </Button>
           </CollapsibleTrigger>
           <span className="flex-grow font-medium">{task.title}</span>
-          <Badge variant="secondary">${task.value.toLocaleString()} ({task.quantity} x ${task.unitPrice.toLocaleString()})</Badge>
+          <Badge variant="secondary">${taskValue.toLocaleString()} ({taskQuantity} x ${taskUnitPrice.toLocaleString()})</Badge>
           <Tooltip>
             <TooltipTrigger>
               <span className="text-xs text-muted-foreground mr-2">
