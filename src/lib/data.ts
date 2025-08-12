@@ -1,95 +1,106 @@
-import type { Project } from './types';
+import type { Contract } from '@/types';
 
-export const initialProjects: Project[] = [
+export const contracts: Contract[] = [
   {
-    id: 'proj-1',
-    title: 'Downtown Office Tower',
-    description:
-      'Construction of a new 40-story office building in the city center. Includes foundation, structural work, facade, and interior finishing.',
+    id: 'CTR-001',
+    name: 'Foundation and Structural Frame for Tower A',
+    contractor: 'BuildRight Inc.',
+    client: 'Urban Development Group',
     startDate: new Date('2023-01-15'),
-    endDate: new Date('2025-06-30'),
-    tasks: [
-      {
-        id: 'task-1-1',
-        title: 'Foundation & Excavation',
-        status: 'Completed',
-        lastUpdated: new Date('2023-04-20T10:00:00Z').toISOString(),
-        subTasks: [
-          {
-            id: 'task-1-1-1',
-            title: 'Site Clearing',
-            status: 'Completed',
-            lastUpdated: new Date('2023-02-01T10:00:00Z').toISOString(),
-            subTasks: [],
-          },
-          {
-            id: 'task-1-1-2',
-            title: 'Pouring Concrete',
-            status: 'Completed',
-            lastUpdated: new Date('2023-04-15T10:00:00Z').toISOString(),
-            subTasks: [],
-          },
-        ],
-      },
-      {
-        id: 'task-1-2',
-        title: 'Structural Steel Erection',
-        status: 'In Progress',
-        lastUpdated: new Date().toISOString(),
-        subTasks: [
-          {
-            id: 'task-1-2-1',
-            title: 'Floors 1-10',
-            status: 'Completed',
-            lastUpdated: new Date('2023-08-01T10:00:00Z').toISOString(),
-            subTasks: [],
-          },
-          {
-            id: 'task-1-2-2',
-            title: 'Floors 11-25',
-            status: 'In Progress',
-            lastUpdated: new Date().toISOString(),
-            subTasks: [],
-          },
-          {
-            id: 'task-1-2-3',
-            title: 'Floors 26-40',
-            status: 'Pending',
-            lastUpdated: new Date('2023-05-01T10:00:00Z').toISOString(),
-            subTasks: [],
-          },
-        ],
-      },
-      {
-        id: 'task-1-3',
-        title: 'Exterior Cladding & Glazing',
-        status: 'Pending',
-        lastUpdated: new Date('2023-05-01T10:00:00Z').toISOString(),
-        subTasks: [],
-      },
+    endDate: new Date('2024-01-14'),
+    totalValue: 1250000,
+    status: 'Active',
+    scope: 'Complete foundation work and erect the main structural frame for the 20-story Tower A, including all necessary materials and labor.',
+    payments: [
+      { id: 'PAY-001', amount: 125000, status: 'Paid', requestDate: new Date('2023-02-15'), paidDate: new Date('2023-03-01') },
+      { id: 'PAY-002', amount: 250000, status: 'Paid', requestDate: new Date('2023-05-20'), paidDate: new Date('2023-06-05') },
+      { id: 'PAY-003', amount: 250000, status: 'Pending', requestDate: new Date('2023-08-18'), },
+    ],
+    changeOrders: [
+      { id: 'CO-001', title: 'Additional reinforcement in basement level 2', description: 'Client requested higher-grade steel reinforcement due to updated seismic codes.', status: 'Approved', date: new Date('2023-04-10'), impact: { cost: 50000, scheduleDays: 14 } },
+    ],
+    versions: [
+      { version: 1, date: new Date('2023-01-15'), changeSummary: 'Initial contract signing.' },
+      { version: 2, date: new Date('2023-04-10'), changeSummary: 'CO-001: Additional reinforcement.' },
     ],
   },
   {
-    id: 'proj-2',
-    title: 'Bridge Expansion Project',
-    description: 'Widening of the main city bridge to accommodate more traffic. Includes adding two new lanes and reinforcing the existing structure.',
-    startDate: new Date('2024-03-01'),
-    endDate: new Date('2025-12-31'),
-    tasks: [
-        {
-            id: 'task-2-1',
-            title: 'Phase 1: Reinforcement',
-            status: 'In Progress',
-            lastUpdated: new Date().toISOString(),
-            subTasks: [],
-        },
-        {
-            id: 'task-2-2',
-            title: 'Phase 2: New Lane Construction',
-            status: 'Pending',
-            lastUpdated: new Date('2024-03-01T10:00:00Z').toISOString(),
-            subTasks: [],
-        }
+    id: 'CTR-002',
+    name: 'HVAC Installation for Commercial Complex',
+    contractor: 'Cooling Systems Co.',
+    client: 'Prime Properties',
+    startDate: new Date('2023-03-01'),
+    endDate: new Date('2023-09-30'),
+    totalValue: 780000,
+    status: 'Active',
+    scope: 'Installation of all heating, ventilation, and air conditioning systems for the new 5-building commercial complex.',
+     payments: [
+      { id: 'PAY-004', amount: 78000, status: 'Paid', requestDate: new Date('2023-03-30'), paidDate: new Date('2023-04-15') },
+      { id: 'PAY-005', amount: 156000, status: 'Pending', requestDate: new Date('2023-06-25') },
+    ],
+    changeOrders: [],
+    versions: [
+      { version: 1, date: new Date('2023-03-01'), changeSummary: 'Initial contract signing.' },
+    ],
+  },
+  {
+    id: 'CTR-003',
+    name: 'Site Landscaping and Exterior Finishing',
+    contractor: 'GreenScapes LLC',
+    client: 'Urban Development Group',
+    startDate: new Date('2024-01-01'),
+    endDate: new Date('2024-06-30'),
+    totalValue: 450000,
+    status: 'Completed',
+    scope: 'Full site landscaping, including irrigation, planting, paving, and exterior lighting for Tower A and surrounding areas.',
+    payments: [
+      { id: 'PAY-006', amount: 225000, status: 'Paid', requestDate: new Date('2024-03-15'), paidDate: new Date('2024-04-01') },
+      { id: 'PAY-007', amount: 225000, status: 'Paid', requestDate: new Date('2024-07-05'), paidDate: new Date('2024-07-20') },
+    ],
+    changeOrders: [],
+    versions: [
+      { version: 1, date: new Date('2024-01-01'), changeSummary: 'Initial contract signing.' },
+    ],
+  },
+  {
+    id: 'CTR-004',
+    name: 'Interior Electrical Wiring - Residential Block',
+    contractor: 'Spark Electricals',
+    client: 'Evergreen Homes',
+    startDate: new Date('2023-06-15'),
+    endDate: new Date('2023-12-15'),
+    totalValue: 320000,
+    status: 'On Hold',
+    scope: 'Complete electrical wiring for all 150 units in the new residential block, including outlets, switches, and main panel connections.',
+    payments: [
+      { id: 'PAY-008', amount: 50000, status: 'Paid', requestDate: new Date('2023-07-15'), paidDate: new Date('2023-08-01') },
+    ],
+    changeOrders: [],
+    versions: [
+      { version: 1, date: new Date('2023-06-15'), changeSummary: 'Initial contract signing.' },
+    ],
+  },
+    {
+    id: 'CTR-005',
+    name: 'Plumbing & Sanitary Works for Mall',
+    contractor: 'AquaFlow Plumbers',
+    client: 'Galleria Malls Ltd.',
+    startDate: new Date('2023-08-01'),
+    endDate: new Date('2024-02-28'),
+    totalValue: 620000,
+    status: 'Active',
+    scope: 'Installation of all plumbing and sanitary systems across the 3-floor shopping mall.',
+    payments: [
+      { id: 'PAY-009', amount: 62000, status: 'Paid', requestDate: new Date('2023-09-01'), paidDate: new Date('2023-09-15') },
+      { id: 'PAY-010', amount: 124000, status: 'Pending', requestDate: new Date('2023-11-20'), },
+    ],
+    changeOrders: [
+      { id: 'CO-002', title: 'Upgrade to touchless faucets in all public restrooms', description: 'Client decision to upgrade fixtures for improved hygiene.', status: 'Approved', date: new Date('2023-10-05'), impact: { cost: 35000, scheduleDays: 10 } },
+      { id: 'CO-003', title: 'Additional grease trap for food court kitchens', description: 'Regulatory requirement identified post-planning.', status: 'Pending', date: new Date('2023-11-15'), impact: { cost: 25000, scheduleDays: 7 } },
+    ],
+    versions: [
+      { version: 1, date: new Date('2023-08-01'), changeSummary: 'Initial contract signing.' },
+      { version: 2, date: new Date('2023-10-05'), changeSummary: 'CO-002: Upgraded faucets.' },
     ],
   },
 ];

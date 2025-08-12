@@ -21,10 +21,10 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <Button variant="ghost" asChild className="w-full justify-start text-lg h-12">
-            <Link href="/dashboard">
-                <Building2 className="mr-3" />
-                <span className="font-bold">Constructo</span>
-            </Link>
+          <Link href="/dashboard">
+            <Building2 className="mr-3" />
+            <span className="font-bold">Constructo</span>
+          </Link>
         </Button>
       </SidebarHeader>
       <SidebarContent>
@@ -34,6 +34,14 @@ export function AppSidebar() {
               <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname.startsWith('/construct')} tooltip="Construct">
+              <Link href="/construct">
+                <FolderKanban />
+                <span>Construct</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
