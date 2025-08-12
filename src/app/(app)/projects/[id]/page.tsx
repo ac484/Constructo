@@ -19,7 +19,10 @@ export default function ProjectDetailPage() {
   const [taskTitle, setTaskTitle] = React.useState('');
 
   if (!project) {
-    notFound();
+    // Let's not call notFound() immediately, data might still be loading
+    // We can show a loading state instead.
+    // For now, returning null is fine as the context handles loading state.
+    return null;
   }
   
   const handleAddTask = (e: React.FormEvent) => {
@@ -42,11 +45,11 @@ export default function ProjectDetailPage() {
           <div className="flex space-x-8 text-sm">
             <div>
               <span className="font-semibold">Start Date: </span>
-              <span className="text-muted-foreground">{format(project.startDate, 'MMMM dd, yyyy')}</span>
+              <span className="text-muted-foreground">{project.startDate ? format(project.startDate, 'MMMM dd, yyyy') : 'N/A'}</span>
             </div>
             <div>
               <span className="font-semibold">End Date: </span>
-              <span className="text-muted-foreground">{format(project.endDate, 'MMMM dd, yyyy')}</span>
+              <span className="text-muted-foreground">{project.endDate ? format(project.endDate, 'MMMM dd, yyyy') : 'N/A'}</span>
             </div>
           </div>
         </CardContent>

@@ -9,6 +9,7 @@ import {
   Circle,
   Clock,
   Plus,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import { AISubtaskSuggestions } from './ai-subtask-suggestions';
 
 interface TaskItemProps {
   task: Task;
@@ -51,10 +53,13 @@ const statusColors: Record<TaskStatus, string> = {
 };
 
 export function TaskItem({ task, projectId }: TaskItemProps) {
-  const { updateTaskStatus, addTask } = useProjects();
+  const { updateTaskStatus, addTask, findProject } = useProjects();
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState('');
   const [isOpen, setIsOpen] = useState(true);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
+
+  const project = findProject(projectId);
 
   const handleStatusChange = (status: TaskStatus) => {
     updateTaskStatus(projectId, task.id, status);
@@ -122,6 +127,21 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
               ))}
             </SelectContent>
           </Select>
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowAISuggestions(true)}
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Get AI Sub-task Suggestions</p>
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -138,6 +158,15 @@ export function TaskItem({ task, projectId }: TaskItemProps) {
             </TooltipContent>
           </Tooltip>
         </div>
+
+        {showAISuggestions && project && (
+            <AISubtaskSuggestions
+                projectTitle={project.title}
+                taskTitle={task.title}
+                onAddSubtask={(title) => addTask(projectId, task.id, title)}
+                onClose={() => setShowAISuggestions(false)}
+            />
+        )}
 
         <CollapsibleContent className="pl-6 space-y-2">
           {task.subTasks.map((subTask) => (

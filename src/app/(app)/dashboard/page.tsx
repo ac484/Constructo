@@ -4,9 +4,32 @@ import { useProjects } from '@/context/ProjectContext';
 import { ProjectProgressChart } from '@/components/app/project-progress-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { differenceInDays, format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
-  const { projects } = useProjects();
+  const { projects, loading } = useProjects();
+  
+  if (loading) {
+      return (
+        <div className="space-y-8">
+            <header>
+                <Skeleton className="h-9 w-1/3" />
+                <Skeleton className="h-4 w-1/2 mt-2" />
+            </header>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28 md:col-span-2" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Skeleton className="h-80" />
+                <Skeleton className="h-80" />
+                <Skeleton className="h-80" />
+            </div>
+        </div>
+      )
+  }
+
   const totalTasks = projects.reduce((acc, p) => acc + countAllTasks(p.tasks), 0);
   const completedTasks = projects.reduce((acc, p) => acc + countAllTasks(p.tasks, 'Completed'), 0);
 
@@ -17,7 +40,7 @@ export default function DashboardPage() {
     }, 0);
   }
 
-  const upcomingDeadlines = projects.filter(p => differenceInDays(p.endDate, new Date()) <= 30 && differenceInDays(p.endDate, new Date()) > 0);
+  const upcomingDeadlines = projects.filter(p => p.endDate && differenceInDays(p.endDate, new Date()) <= 30 && differenceInDays(p.endDate, new Date()) > 0);
 
   return (
     <div className="space-y-8">
@@ -59,7 +82,7 @@ export default function DashboardPage() {
                         {upcomingDeadlines.map(p => (
                             <li key={p.id} className="text-xs flex justify-between">
                                <span>{p.title}</span> 
-                               <span className="font-medium">{format(p.endDate, 'MMM dd, yyyy')}</span>
+                               <span className="font-medium">{p.endDate ? format(p.endDate, 'MMM dd, yyyy') : ''}</span>
                             </li>
                         ))}
                     </ul>

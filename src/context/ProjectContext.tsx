@@ -1,57 +1,102 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Project, Task, TaskStatus } from '@/lib/types';
-import { initialProjects } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, writeBatch, Timestamp, onSnapshot } from "firebase/firestore";
 
 interface ProjectContextType {
   projects: Project[];
-  addProject: (project: Omit<Project, 'id' | 'tasks'>) => void;
+  loading: boolean;
   findProject: (projectId: string) => Project | undefined;
-  updateTaskStatus: (projectId: string, taskId: string, status: TaskStatus) => void;
-  addTask: (projectId: string, parentTaskId: string | null, taskTitle: string) => void;
+  updateTaskStatus: (projectId: string, taskId: string, status: TaskStatus) => Promise<void>;
+  addTask: (projectId: string, parentTaskId: string | null, taskTitle: string) => Promise<void>;
+  addProject: (project: Omit<Project, 'id' | 'tasks'>) => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider = ({ children }: { children: ReactNode }) => {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const findProject = (projectId: string) => {
+  const processFirestoreProjects = (docs: any[]): Project[] => {
+    return docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        startDate: (data.startDate as Timestamp)?.toDate(),
+        endDate: (data.endDate as Timestamp)?.toDate(),
+        tasks: processFirestoreTasks(data.tasks || [])
+      } as Project;
+    });
+  }
+  
+  const processFirestoreTasks = (tasks: any[]): Task[] => {
+      return tasks.map(task => ({
+          ...task,
+          lastUpdated: task.lastUpdated, // Should already be ISO string
+          subTasks: task.subTasks ? processFirestoreTasks(task.subTasks) : []
+      }));
+  }
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "projects"), (querySnapshot) => {
+        const projectsData = processFirestoreProjects(querySnapshot.docs);
+        setProjects(projectsData);
+        setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+
+  const findProject = useCallback((projectId: string) => {
     return projects.find((p) => p.id === projectId);
+  }, [projects]);
+  
+  const addProject = async (project: Omit<Project, 'id' | 'tasks'>) => {
+    const batch = writeBatch(db);
+    const newProjectRef = doc(collection(db, "projects"));
+    
+    batch.set(newProjectRef, {
+        ...project,
+        tasks: [],
+    });
+
+    await batch.commit();
   };
 
-  const addProject = (project: Omit<Project, 'id' | 'tasks'>) => {
-    const newProject: Project = {
-      ...project,
-      id: `proj-${Date.now()}`,
-      tasks: [],
-    };
-    setProjects((prev) => [...prev, newProject]);
-  };
+  const updateTaskStatus = async (projectId: string, taskId: string, status: TaskStatus) => {
+    const projectRef = doc(db, "projects", projectId);
+    const projectData = findProject(projectId);
+    if (!projectData) return;
 
-  const updateTaskStatus = (projectId: string, taskId: string, status: TaskStatus) => {
     const updateRecursive = (tasks: Task[]): Task[] => {
       return tasks.map((task) => {
         if (task.id === taskId) {
           return { ...task, status, lastUpdated: new Date().toISOString() };
         }
-        if (task.subTasks.length > 0) {
+        if (task.subTasks && task.subTasks.length > 0) {
           return { ...task, subTasks: updateRecursive(task.subTasks) };
         }
         return task;
       });
     };
 
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === projectId ? { ...p, tasks: updateRecursive(p.tasks) } : p
-      )
-    );
+    const newTasks = updateRecursive(projectData.tasks);
+    const batch = writeBatch(db);
+    batch.update(projectRef, { tasks: newTasks });
+    await batch.commit();
   };
   
-  const addTask = (projectId: string, parentTaskId: string | null, taskTitle: string) => {
+  const addTask = async (projectId: string, parentTaskId: string | null, taskTitle: string) => {
+    const projectRef = doc(db, "projects", projectId);
+    const projectData = findProject(projectId);
+    if (!projectData) return;
+    
     const newTask: Task = {
         id: `task-${Date.now()}`,
         title: taskTitle,
@@ -68,23 +113,21 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
             if (task.id === parentTaskId) {
                 return {...task, subTasks: [...task.subTasks, newTask]};
             }
-            if (task.subTasks.length > 0) {
+            if (task.subTasks && task.subTasks.length > 0) {
                 return {...task, subTasks: addRecursive(task.subTasks)};
             }
             return task;
         });
     };
-
-    setProjects(prev => prev.map(p => {
-        if (p.id === projectId) {
-            return {...p, tasks: addRecursive(p.tasks)};
-        }
-        return p;
-    }))
+    
+    const newTasks = addRecursive(projectData.tasks);
+    const batch = writeBatch(db);
+    batch.update(projectRef, { tasks: newTasks });
+    await batch.commit();
   }
 
   return (
-    <ProjectContext.Provider value={{ projects, addProject, findProject, updateTaskStatus, addTask }}>
+    <ProjectContext.Provider value={{ projects, loading, addProject, findProject, updateTaskStatus, addTask }}>
       {children}
     </ProjectContext.Provider>
   );

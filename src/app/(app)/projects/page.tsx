@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CreateProjectDialog } from '@/components/app/create-project-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function calculateProgress(tasks: any[]): { completed: number, total: number } {
   let completed = 0;
@@ -29,7 +30,7 @@ function calculateProgress(tasks: any[]): { completed: number, total: number } {
 }
 
 export default function ProjectsPage() {
-  const { projects } = useProjects();
+  const { projects, loading } = useProjects();
 
   return (
     <div className="space-y-8">
@@ -43,7 +44,29 @@ export default function ProjectsPage() {
         <CreateProjectDialog />
       </header>
       
-      {projects.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-full mt-2" />
+                        <Skeleton className="h-4 w-1/2 mt-1" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-8 w-full" />
+                         <div className="space-y-2">
+                             <Skeleton className="h-4 w-1/4" />
+                             <Skeleton className="h-4 w-1/2" />
+                         </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+      ) : projects.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
             <h2 className="text-xl font-semibold">No Projects Yet</h2>
             <p className="text-muted-foreground mt-2">Click "New Project" to get started.</p>
@@ -70,8 +93,8 @@ export default function ProjectsPage() {
                     <p className="text-xs text-muted-foreground text-right">{completed} of {total} tasks complete</p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <p><span className="font-medium text-foreground">Start:</span> {format(project.startDate, 'MMM dd, yyyy')}</p>
-                  <p><span className="font-medium text-foreground">End:</span> {format(project.endDate, 'MMM dd, yyyy')}</p>
+                  <p><span className="font-medium text-foreground">Start:</span> {project.startDate ? format(project.startDate, 'MMM dd, yyyy') : 'N/A'}</p>
+                  <p><span className="font-medium text-foreground">End:</span> {project.endDate ? format(project.endDate, 'MMM dd, yyyy') : 'N/A'}</p>
                 </div>
               </CardContent>
               <CardFooter>
