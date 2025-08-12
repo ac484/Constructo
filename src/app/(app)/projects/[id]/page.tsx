@@ -1,7 +1,7 @@
 'use client';
 
 import { useProjects } from '@/context/ProjectContext';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { TaskItem } from '@/components/app/task-item';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -10,9 +10,10 @@ import { PlusCircle } from 'lucide-react';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage() {
+  const params = useParams();
   const { findProject, addTask } = useProjects();
-  const project = findProject(params.id);
+  const project = findProject(params.id as string);
 
   const [isAddingTask, setIsAddingTask] = React.useState(false);
   const [taskTitle, setTaskTitle] = React.useState('');
